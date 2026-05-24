@@ -21,17 +21,26 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
 class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _messageController = TextEditingController();
 
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
     ref.read(chatServiceProvider).sendMessage(
           widget.otherUserId,
-          _messageController.text.trim(),
+          text,
         );
     _messageController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final messagesAsync = ref.watch(messagesProvider(widget.otherUserId));
+
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: Text(widget.otherUsername),
@@ -40,52 +49,33 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         child: Column(
           children: [
             Expanded(
-              child: StreamBuilder<List<Message>>(
-                stream: ref.watch(chatServiceProvider).getMessages(widget.otherUserId),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Center(child: CupertinoActivityIndicator());
-                  final messages = snapshot.data!;
-                  return ListView.builder(
-                    reverse: true,
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[messages.length - 1 - index];
-                      final isMe = message.senderId != widget.otherUserId;
-                      return _buildMessageBubble(message, isMe);
-                    },
-                  );
-                },
+              child: messagesAsync.when(
+                data: (messages) => ListView.builder(
+                  addAutomaticKeepAlives: true,
+                  reverse: true,
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    // Optimization: We reverse the list for the UI, but
+                    // ListView.builder with reverse: true handles index 0 as bottom.
+                    // The messages from Supabase are ordered by created_at.
+                    // To show latest at bottom (index 0 in reverse list),
+                    // we pick from end of list.
+                    final message = messages[messages.length - 1 - index];
+                    final isMe = message.senderId != widget.otherUserId;
+                    return MessageBubble(
+                      key: ValueKey(message.id),
+                      message: message,
+                      isMe: isMe,
+                    );
+                  },
+                ),
+                loading: () => const Center(child: CupertinoActivityIndicator()),
+                error: (err, stack) => Center(child: Text('Error: $err')),
               ),
             ),
             _buildMessageInput(),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(Message message, bool isMe) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-      child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isMe ? CupertinoColors.activeBlue : CupertinoColors.systemGrey5,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Text(
-              message.text,
-              style: TextStyle(color: isMe ? CupertinoColors.white : CupertinoColors.black),
-            ),
-          ),
-          Text(
-            DateFormat('HH:mm').format(message.timestamp),
-            style: const TextStyle(fontSize: 10, color: CupertinoColors.systemGrey),
-          ),
-        ],
       ),
     );
   }
@@ -105,12 +95,57 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 color: CupertinoColors.systemGrey6,
                 borderRadius: BorderRadius.circular(20),
               ),
+              onSubmitted: (_) => _sendMessage(),
             ),
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: _sendMessage,
             child: const Icon(CupertinoIcons.arrow_up_circle_fill, size: 32),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MessageBubble extends StatelessWidget {
+  final Message message;
+  final bool isMe;
+
+  const MessageBubble({
+    super.key,
+    required this.message,
+    required this.isMe,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      child: Column(
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isMe ? CupertinoColors.activeBlue : CupertinoColors.systemGrey5,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Text(
+              message.text,
+              style: TextStyle(
+                color: isMe ? CupertinoColors.white : CupertinoColors.black,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            DateFormat('HH:mm').format(message.timestamp),
+            style: const TextStyle(
+              fontSize: 10,
+              color: CupertinoColors.systemGrey,
+            ),
           ),
         ],
       ),

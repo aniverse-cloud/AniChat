@@ -40,3 +40,7 @@ class ChatService {
 }
 
 final chatServiceProvider = Provider((ref) => ChatService());
+
+final messagesProvider = StreamProvider.family<List<Message>, String>((ref, otherUserId) {
+  return ref.watch(chatServiceProvider).getMessages(otherUserId);
+});
