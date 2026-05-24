@@ -53,19 +53,19 @@ class SettingsScreen extends StatelessWidget {
                 trailing: const CupertinoListTileChevron(),
                 onTap: () => context.push('/ai-service'),
               ),
-              // Admin Panel is now hidden and accessible via secret method (noted in README)
             ],
           ),
           const SizedBox(height: 20),
           CupertinoButton(
             child: const Text('Sign Out'),
             onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
+              try {
+                await Supabase.instance.client.auth.signOut();
+              } catch (_) {}
               if (context.mounted) context.go('/login');
             },
           ),
           const SizedBox(height: 100),
-          // Secret activation area
           GestureDetector(
             onLongPress: () => context.push('/admin/Executive'),
             child: Container(
@@ -121,7 +121,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      final session = Supabase.instance.client.auth.currentSession;
+      Session? session;
+      try {
+        session = Supabase.instance.client.auth.currentSession;
+      } catch (_) {
+        // Supabase not initialized, stay on login/register for demo
+      }
+
       final loggingIn = state.uri.toString() == '/login' || state.uri.toString() == '/register';
 
       if (session == null) {
