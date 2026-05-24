@@ -7,33 +7,9 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/ai_customer_service/presentation/ai_service_screen.dart';
 import '../features/admin/presentation/admin_panel.dart';
-
-// Placeholder Screens
-class ChatsScreen extends StatelessWidget {
-  const ChatsScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: Text('Chats'),
-      ),
-      child: Center(child: Text('Messages will appear here')),
-    );
-  }
-}
-
-class ContactsScreen extends StatelessWidget {
-  const ContactsScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: Text('Contacts'),
-      ),
-      child: Center(child: Text('Your contacts list')),
-    );
-  }
-}
+import '../features/chat/presentation/chats_screen.dart';
+import '../features/chat/presentation/contacts_screen.dart';
+import '../features/chat/presentation/chat_detail_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -100,6 +76,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin/:level',
         builder: (context, state) => AdminPanel(
           adminLevel: state.pathParameters['level'] ?? 'Lower',
+        ),
+      ),
+      GoRoute(
+        path: '/chat-detail/:id/:username',
+        builder: (context, state) => ChatDetailScreen(
+          otherUserId: state.pathParameters['id']!,
+          otherUsername: state.pathParameters['username']!,
         ),
       ),
       ShellRoute(
