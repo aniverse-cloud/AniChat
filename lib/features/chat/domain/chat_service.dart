@@ -7,32 +7,35 @@ class ChatService {
   final SupabaseClient _client = Supabase.instance.client;
   final Box<Message> _messageBox = Hive.box<Message>('messages');
 
+  String _getConversationId(String u1, String u2) {
+    final ids = [u1, u2]..sort();
+    return ids.join('_');
+  }
+
   Stream<List<Message>> getMessages(String otherUserId) {
     final currentUserId = _client.auth.currentUser!.id;
+    final conversationId = _getConversationId(currentUserId, otherUserId);
 
     // BOLT OPTIMIZATION:
-    // We fetch messages using the stream.
-    // To optimize, we ensure we only process messages for this specific conversation.
-    // We also use Hive for local persistence which makes subsequent loads instant.
+    // 1. Server-side filtering using 'conversation_id' column.
+    //    This significantly reduces data transfer and client-side processing
+    //    by only streaming messages for the active conversation.
+    // 2. Efficient Hive caching: Only write messages that aren't already present,
+    //    avoiding redundant disk I/O on every stream update.
 
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
+        .eq('conversation_id', conversationId)
         .order('created_at')
         .map((maps) {
-          // Optimized filtering:
-          // 1. Convert to Message models only once.
-          // 2. Filter for specific conversation participants.
-          final messages = maps
-              .map((map) => Message.fromMap(map))
-              .where((msg) =>
-                  (msg.senderId == currentUserId && msg.receiverId == otherUserId) ||
-                  (msg.senderId == otherUserId && msg.receiverId == currentUserId))
-              .toList();
+          final messages = maps.map((map) => Message.fromMap(map)).toList();
 
-          // Performance win: Cache messages for instant offline access/loading
+          // Performance win: Cache messages efficiently
           for (var msg in messages) {
-            _messageBox.put(msg.id, msg);
+            if (!_messageBox.containsKey(msg.id)) {
+              _messageBox.put(msg.id, msg);
+            }
           }
 
           return messages;
@@ -40,10 +43,14 @@ class ChatService {
   }
 
   Future<void> sendMessage(String receiverId, String text) async {
+    final currentUserId = _client.auth.currentUser!.id;
+    final conversationId = _getConversationId(currentUserId, receiverId);
+
     final message = {
-      'sender_id': _client.auth.currentUser!.id,
+      'sender_id': currentUserId,
       'receiver_id': receiverId,
       'text': text,
+      'conversation_id': conversationId,
     };
     await _client.from('messages').insert(message);
   }

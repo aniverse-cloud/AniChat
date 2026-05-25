@@ -16,7 +16,31 @@ To get the app fully functional, follow these steps:
    - `sender_id` (uuid)
    - `receiver_id` (uuid)
    - `text` (text)
+  - `conversation_id` (text)
    - `created_at` (timestamp with time zone, default: now())
+
+6. Enable **Realtime** for the `messages` table.
+7. Create a `profiles` table:
+   - `id` (uuid, references auth.users)
+   - `username` (text)
+   - `created_at` (timestamp)
+8. Add the `get_my_chats` RPC to fetch unique conversations:
+   ```sql
+   create or replace function get_my_chats()
+   returns table (id uuid, username text, last_message text)
+   language sql security definer
+   as $$
+     select distinct on (u.id)
+       u.id,
+       u.raw_user_meta_data->>'username' as username,
+       m.text as last_message
+     from auth.users u
+     join messages m on m.sender_id = u.id or m.receiver_id = u.id
+     where (m.sender_id = auth.uid() or m.receiver_id = auth.uid())
+     and u.id != auth.uid()
+     order by u.id, m.created_at desc;
+   $$;
+   ```
 
 ### 2. Google Sign-In (Optional)
 If you wish to activate Google Sign-In:

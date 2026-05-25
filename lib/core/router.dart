@@ -10,6 +10,7 @@ import '../features/chat/presentation/chats_screen.dart';
 import '../features/chat/presentation/contacts_screen.dart';
 import '../features/chat/presentation/chat_detail_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../features/settings/presentation/edit_profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -39,6 +40,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           otherUserId: state.pathParameters['id']!,
           otherUsername: state.pathParameters['username']!,
         ),
+      ),
+      GoRoute(
+        path: '/edit-profile',
+        builder: (context, state) => const EditProfileScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => MainLayout(child: child),
