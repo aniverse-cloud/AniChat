@@ -17,7 +17,44 @@ class ChatsScreen extends ConsumerWidget {
       navigationBar: const CupertinoNavigationBar(
         middle: Text('Chats'),
       ),
-      child: FutureBuilder<List<Map<String, dynamic>>>(
+      child: Stack(
+        children: [
+          _buildChatList(context, client),
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => context.push('/contacts'),
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.activeBlue,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: CupertinoColors.activeBlue.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  CupertinoIcons.plus,
+                  color: CupertinoColors.white,
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatList(BuildContext context, SupabaseClient client) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
         // Fetch unique users the current user has messaged
         future: client.rpc('get_my_chats'),
         builder: (context, snapshot) {
@@ -58,7 +95,6 @@ class ChatsScreen extends ConsumerWidget {
             },
           );
         },
-      ),
-    );
+      );
   }
 }

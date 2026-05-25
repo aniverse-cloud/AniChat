@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,51 +9,7 @@ import '../features/admin/presentation/admin_panel.dart';
 import '../features/chat/presentation/chats_screen.dart';
 import '../features/chat/presentation/contacts_screen.dart';
 import '../features/chat/presentation/chat_detail_screen.dart';
-
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Settings'),
-      ),
-      child: ListView(
-        children: [
-          CupertinoListSection.insetGrouped(
-            children: [
-              CupertinoListTile(
-                title: const Text('Customer Service AI'),
-                leading: const Icon(CupertinoIcons.ant_fill),
-                trailing: const CupertinoListTileChevron(),
-                onTap: () => context.push('/ai-service'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          CupertinoButton(
-            child: const Text('Sign Out'),
-            onPressed: () async {
-              try {
-                await Supabase.instance.client.auth.signOut();
-              } catch (_) {}
-              if (context.mounted) context.go('/login');
-            },
-          ),
-          const SizedBox(height: 100),
-          GestureDetector(
-            onLongPress: () => context.push('/admin/Executive'),
-            child: Container(
-              height: 50,
-              color: CupertinoColors.transparent,
-              child: const Center(child: Text('AnChat v1.0.0', style: TextStyle(color: CupertinoColors.systemGrey4, fontSize: 12))),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+import '../features/settings/presentation/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(

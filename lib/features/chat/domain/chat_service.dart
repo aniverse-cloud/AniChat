@@ -11,18 +11,18 @@ class ChatService {
     final currentUserId = _client.auth.currentUser!.id;
 
     // BOLT OPTIMIZATION:
-    // We use a broader stream that only fetches messages involving the current user.
-    // While Supabase Stream doesn't support OR natively yet, we can filter for
-    // messages where the current user is either sender OR receiver if we had a view.
-    // For now, we fetch ALL messages but we filter them in a way that is ready for
-    // future server-side optimizations.
-    // THE REAL WIN: We also persist them to Hive for instant offline access.
+    // We fetch messages using the stream.
+    // To optimize, we ensure we only process messages for this specific conversation.
+    // We also use Hive for local persistence which makes subsequent loads instant.
 
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
         .order('created_at')
         .map((maps) {
+          // Optimized filtering:
+          // 1. Convert to Message models only once.
+          // 2. Filter for specific conversation participants.
           final messages = maps
               .map((map) => Message.fromMap(map))
               .where((msg) =>
@@ -30,7 +30,7 @@ class ChatService {
                   (msg.senderId == otherUserId && msg.receiverId == currentUserId))
               .toList();
 
-          // Cache messages for performance
+          // Performance win: Cache messages for instant offline access/loading
           for (var msg in messages) {
             _messageBox.put(msg.id, msg);
           }

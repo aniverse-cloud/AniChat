@@ -14,12 +14,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _petNameController = TextEditingController();
   final _birthCityController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> _register() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) return;
+    if (_emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _phoneController.text.isEmpty) {
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
@@ -27,6 +32,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         username: _usernameController.text.trim(),
+        phone: _phoneController.text.trim(),
         securityQuestions: {
           'pet_name': _petNameController.text.trim().toLowerCase(),
           'birth_city': _birthCityController.text.trim().toLowerCase(),
@@ -86,6 +92,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               CupertinoTextField(
                 controller: _usernameController,
                 placeholder: 'Username',
+                padding: const EdgeInsets.all(12),
+              ),
+              const SizedBox(height: 16),
+              CupertinoTextField(
+                controller: _phoneController,
+                placeholder: 'Phone Number',
+                keyboardType: TextInputType.phone,
                 padding: const EdgeInsets.all(12),
               ),
               const SizedBox(height: 16),

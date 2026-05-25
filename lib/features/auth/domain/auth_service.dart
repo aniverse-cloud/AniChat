@@ -11,6 +11,7 @@ class AuthService {
     required String email,
     required String password,
     required String username,
+    required String phone,
     required Map<String, String> securityQuestions,
   }) async {
     return await _client.auth.signUp(
@@ -18,6 +19,7 @@ class AuthService {
       password: password,
       data: {
         'username': username,
+        'phone': phone,
         'security_questions': securityQuestions,
       },
     );
