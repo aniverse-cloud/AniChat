@@ -5,13 +5,16 @@ import 'core/supabase_config.dart';
 import 'core/router.dart';
 import 'ui/theme/theme.dart';
 import 'models/message.dart';
+import 'models/contact.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
   Hive.registerAdapter(MessageAdapter());
+  Hive.registerAdapter(ContactAdapter());
   await Hive.openBox<Message>('messages');
+  await Hive.openBox<Contact>('contacts');
 
   try {
     if (SupabaseConfig.url != 'YOUR_SUPABASE_URL') {

@@ -81,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
                       GestureDetector(
                         onLongPress: () => context.push('/admin/Executive'),
                         child: const Text(
-                          'AnChat v1.0.1',
+                          'AnChat v1.0.2',
                           style: TextStyle(color: CupertinoColors.white, fontSize: 12),
                         ),
                       ),

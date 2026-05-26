@@ -1,11 +1,7 @@
-## 2025-05-24 - Flutter Dependency Versioning
-**Learning:** Found that 'isar_generator' and 'hive_generator' have strict 'analyzer' package version requirements that can conflict with 'flutter_test' (which pins 'matcher' and indirectly affects the dependency tree).
-**Action:** Use 'hive' without the generator or ensure compatible version ranges when 'flutter_test' is a requirement in a Flutter 3.x environment.
+## 2025-05-15 - [Chat Retrieval O(N) -> O(1)]
+**Learning:** The initial implementation scanned the entire Hive box (O(N)) for every message list update. In a chat app, this scales poorly as history grows.
+**Action:** Use an in-memory `Map<String, List<Message>>` cache keyed by `conversationId`. This makes retrieval O(1) and UI updates extremely snappy, only requiring an O(K log K) sort of the conversation history (where K << N).
 
-## 2026-05-25 - Glassmorphism Performance Considerations
-**Learning:** Using BackdropFilter with excessive sigma values on high-density displays can drop frame rates.
-**Action:** Keep blur values moderate (around 10) and ensure glassmorphic elements are not excessively layered to maintain 60/120 FPS.
-
-## 2026-05-25 - Server-side Stream Filtering
-**Learning:** Supabase streams without filters fetch the entire table before client-side filtering, leading to O(N) memory and bandwidth growth per user.
-**Action:** Always use .eq() or other filters on streams (like conversation_id) to ensure the client only receives relevant data packets.
+## 2025-05-15 - [Local-First UX with Remote Discovery]
+**Learning:** Switching to local-first data for `ChatsScreen` (via Hive `watch()`) provides instant loads, but breaks if a message is received from a user NOT in the local contacts box.
+**Action:** Implemented automatic profile discovery in `ChatService`. When a message arrives from an unknown UID, the service fetches the profile from Supabase and populates the local `contacts` box, ensuring the conversation appears correctly in the UI.

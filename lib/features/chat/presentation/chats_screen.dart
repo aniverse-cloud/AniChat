@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../ui/widgets/glass_widgets.dart';
+import '../domain/chat_service.dart';
 
 class ChatsScreen extends ConsumerWidget {
   const ChatsScreen({super.key});
@@ -14,87 +16,115 @@ class ChatsScreen extends ConsumerWidget {
     if (currentUserId == null) return const Center(child: Text('Not logged in'));
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Chats'),
-      ),
-      child: Stack(
-        children: [
-          _buildChatList(context, client),
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () => context.push('/contacts'),
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: CupertinoColors.activeBlue,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: CupertinoColors.activeBlue.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+      child: GlassmorphicBackground(
+        child: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                const CupertinoSliverNavigationBar(
+                  largeTitle: Text('Chats', style: TextStyle(color: CupertinoColors.white)),
+                  backgroundColor: CupertinoColors.transparent,
+                  border: null,
                 ),
-                child: const Icon(
-                  CupertinoIcons.plus,
-                  color: CupertinoColors.white,
-                  size: 32,
+                SliverFillRemaining(
+                  child: _buildChatList(context, ref),
+                ),
+              ],
+            ),
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => context.push('/contacts'),
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: CupertinoColors.white.withValues(alpha: 0.3)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CupertinoColors.black.withValues(alpha: 0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.plus,
+                    color: CupertinoColors.white,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildChatList(BuildContext context, SupabaseClient client) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-        // Fetch unique users the current user has messaged
-        future: client.rpc('get_my_chats'),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CupertinoActivityIndicator());
-          }
+  Widget _buildChatList(BuildContext context, WidgetRef ref) {
+    final contactsAsync = ref.watch(contactsProvider);
 
-          // Fallback if RPC is not defined yet: show some recent messages
-          if (snapshot.hasError) {
-             return Center(child: Column(
-               mainAxisAlignment: MainAxisAlignment.center,
-               children: [
-                 const Icon(CupertinoIcons.chat_bubble_2, size: 64, color: CupertinoColors.systemGrey),
-                 const SizedBox(height: 16),
-                 const Text('No conversations yet'),
-                 CupertinoButton(
-                   child: const Text('Start Chatting'),
-                   onPressed: () => context.go('/contacts'),
-                 )
-               ],
-             ));
-          }
+    return contactsAsync.when(
+      data: (contacts) {
+        final chats = contacts
+            .where((c) => c.lastMessage != null)
+            .toList()
+          ..sort((a, b) => (b.lastMessageTime ?? DateTime(0))
+              .compareTo(a.lastMessageTime ?? DateTime(0)));
 
-          final chats = snapshot.data ?? [];
-
-          return ListView.builder(
-            itemCount: chats.length,
-            itemBuilder: (context, index) {
-              final chat = chats[index];
-              return CupertinoListTile(
-                title: Text(chat['username'] ?? 'User'),
-                subtitle: Text(chat['last_message'] ?? ''),
-                leading: const Icon(CupertinoIcons.person_circle_fill),
-                onTap: () {
-                   context.push('/chat-detail/${chat['id']}/${chat['username']}');
-                },
-              );
-            },
+        if (chats.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(CupertinoIcons.chat_bubble_2,
+                    size: 64, color: CupertinoColors.systemGrey),
+                const SizedBox(height: 16),
+                const Text('No conversations yet',
+                    style: TextStyle(color: CupertinoColors.white)),
+                CupertinoButton(
+                  child: const Text('Start Chatting'),
+                  onPressed: () => context.push('/contacts'),
+                )
+              ],
+            ),
           );
-        },
-      );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: chats.length,
+          itemBuilder: (context, index) {
+            final chat = chats[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: GlassCard(
+                child: CupertinoListTile(
+                  title: Text(chat.username,
+                      style: const TextStyle(color: CupertinoColors.white)),
+                  subtitle: Text(chat.lastMessage ?? '',
+                      style: TextStyle(
+                          color: CupertinoColors.white.withValues(alpha: 0.7))),
+                  leading: const Icon(CupertinoIcons.person_circle_fill,
+                      color: CupertinoColors.white, size: 40),
+                  onTap: () {
+                    context.push('/chat-detail/${chat.id}/${chat.username}');
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CupertinoActivityIndicator()),
+      error: (err, stack) => Center(
+          child: Text('Error: $err',
+              style: const TextStyle(color: CupertinoColors.white))),
+    );
   }
 }
