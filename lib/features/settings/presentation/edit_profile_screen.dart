@@ -1,7 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import '../../../ui/widgets/glass_widgets.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -85,75 +85,64 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      child: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  CupertinoColors.systemBlue,
-                  CupertinoColors.systemPurple,
-                  CupertinoColors.systemPink,
-                ],
-              ),
+      child: GlassmorphicBackground(
+        child: CustomScrollView(
+          slivers: [
+            const CupertinoSliverNavigationBar(
+              largeTitle: Text('Edit Profile', style: TextStyle(color: CupertinoColors.white)),
+              backgroundColor: CupertinoColors.transparent,
+              border: null,
+              previousPageTitle: 'Settings',
             ),
-          ),
-          CustomScrollView(
-            slivers: [
-              const CupertinoSliverNavigationBar(
-                largeTitle: Text('Edit Profile', style: TextStyle(color: CupertinoColors.white)),
-                backgroundColor: CupertinoColors.transparent,
-                border: null,
-                previousPageTitle: 'Settings',
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _buildGlassCard(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              CupertinoTextField(
-                                controller: _usernameController,
-                                placeholder: 'Username',
-                                prefix: const Padding(
-                                  padding: EdgeInsets.only(left: 8.0),
-                                  child: Icon(CupertinoIcons.person, color: CupertinoColors.white),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.white.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                style: const TextStyle(color: CupertinoColors.white),
-                                placeholderStyle: TextStyle(color: CupertinoColors.white.withValues(alpha: 0.5)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    GlassCard(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            CupertinoTextField(
+                              controller: _usernameController,
+                              placeholder: 'Username',
+                              prefix: const Padding(
+                                padding: EdgeInsets.only(left: 8.0),
+                                child: Icon(CupertinoIcons.person, color: CupertinoColors.white),
                               ),
-                              const SizedBox(height: 16),
-                              CupertinoTextField(
-                                controller: _phoneController,
-                                placeholder: 'Phone Number',
-                                prefix: const Padding(
-                                  padding: EdgeInsets.only(left: 8.0),
-                                  child: Icon(CupertinoIcons.phone, color: CupertinoColors.white),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.white.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                style: const TextStyle(color: CupertinoColors.white),
-                                placeholderStyle: TextStyle(color: CupertinoColors.white.withValues(alpha: 0.5)),
-                                keyboardType: TextInputType.phone,
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ],
-                          ),
+                              style: const TextStyle(color: CupertinoColors.white),
+                              placeholderStyle: TextStyle(color: CupertinoColors.white.withValues(alpha: 0.5)),
+                            ),
+                            const SizedBox(height: 16),
+                            CupertinoTextField(
+                              controller: _phoneController,
+                              placeholder: 'Phone Number',
+                              prefix: const Padding(
+                                padding: EdgeInsets.only(left: 8.0),
+                                child: Icon(CupertinoIcons.phone, color: CupertinoColors.white),
+                              ),
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              style: const TextStyle(color: CupertinoColors.white),
+                              placeholderStyle: TextStyle(color: CupertinoColors.white.withValues(alpha: 0.5)),
+                              keyboardType: TextInputType.phone,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      _buildGlassCard(
+                    ),
+                    const SizedBox(height: 24),
+                    GlassCard(
+                      child: Container(
+                        width: double.infinity,
+                        alignment: Alignment.center,
                         child: CupertinoButton(
                           onPressed: _loading ? null : _updateProfile,
                           child: _loading
@@ -161,30 +150,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             : const Text('Save Changes', style: TextStyle(color: CupertinoColors.white, fontWeight: FontWeight.bold)),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGlassCard({required Widget child}) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: CupertinoColors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: CupertinoColors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
+            ),
+          ],
         ),
       ),
     );

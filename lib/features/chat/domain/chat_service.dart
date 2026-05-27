@@ -205,6 +205,45 @@ class ChatService {
     }
   }
 
+  // BOLT OPTIMIZATION: Sync local contacts with Supabase profiles for up-to-date discovery
+  Future<void> syncContacts() async {
+    try {
+      final currentUserId = _client.auth.currentUser?.id;
+      if (currentUserId == null) return;
+
+      final data = await _client.from('profiles').select();
+      final List<dynamic> profiles = data as List<dynamic>;
+
+      for (var profile in profiles) {
+        if (profile['id'] == currentUserId) continue;
+
+        final contact = Contact(
+          id: profile['id'],
+          username: profile['username'] ?? 'User',
+          phone: profile['phone'],
+          avatarUrl: profile['avatar_url'],
+        );
+
+        // Update if exists or add new
+        final existing = _contactBox.get(contact.id);
+        if (existing != null) {
+          // Preserve last message info
+          _contactBox.put(
+            contact.id,
+            contact.copyWith(
+              lastMessage: existing.lastMessage,
+              lastMessageTime: existing.lastMessageTime,
+            ),
+          );
+        } else {
+          _contactBox.put(contact.id, contact);
+        }
+      }
+    } catch (e) {
+      // Sync error
+    }
+  }
+
   Stream<List<Contact>> getContactsStream() async* {
     // Initial value
     yield _contactBox.values.toList();

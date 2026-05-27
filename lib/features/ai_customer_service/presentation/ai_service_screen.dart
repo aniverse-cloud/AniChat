@@ -3,15 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../../core/supabase_config.dart';
+import '../../../ui/widgets/glass_widgets.dart';
 
 class AICustomerServiceScreen extends ConsumerStatefulWidget {
   const AICustomerServiceScreen({super.key});
 
   @override
-  ConsumerState<AICustomerServiceScreen> createState() => _AICustomerServiceScreenState();
+  ConsumerState<AICustomerServiceScreen> createState() =>
+      _AICustomerServiceScreenState();
 }
 
-class _AICustomerServiceScreenState extends ConsumerState<AICustomerServiceScreen> {
+class _AICustomerServiceScreenState
+    extends ConsumerState<AICustomerServiceScreen> {
   late final GenerativeModel _model;
   late final ChatSession _chat;
   final List<Map<String, String>> _messages = [];
@@ -26,17 +29,16 @@ class _AICustomerServiceScreenState extends ConsumerState<AICustomerServiceScree
       model: 'gemini-1.5-flash-latest',
       apiKey: SupabaseConfig.geminiApiKey,
       systemInstruction: Content.system(
-        'You are AnChat AI, a highly advanced and helpful customer service agent. '
-        'You talk like a human, with empathy and clarity. '
-        'You have the authority to: '
-        '1. Help users recover accounts (ask for email and security questions). '
-        '2. Monitor policy violations and explain them. '
-        '3. Delete accounts upon request (after confirmation). '
-        '4. Ban or Unban users (simulated for this demo). '
-        'Current User Context: Email: ${Supabase.instance.client.auth.currentUser?.email ?? "Unknown"}, '
-        'Username: ${Supabase.instance.client.auth.currentUser?.userMetadata?['username'] ?? "Unknown"}. '
-        'Always be professional but friendly.'
-      ),
+          'You are AnChat AI, a highly advanced and helpful customer service agent. '
+          'You talk like a human, with empathy and clarity. '
+          'You have the authority to: '
+          '1. Help users recover accounts (ask for email and security questions). '
+          '2. Monitor policy violations and explain them. '
+          '3. Delete accounts upon request (after confirmation). '
+          '4. Ban or Unban users (simulated for this demo). '
+          'Current User Context: Email: ${Supabase.instance.client.auth.currentUser?.email ?? "Unknown"}, '
+          'Username: ${Supabase.instance.client.auth.currentUser?.userMetadata?['username'] ?? "Unknown"}. '
+          'Always be professional but friendly.'),
     );
     _chat = _model.startChat();
     _addInitialMessage();
@@ -46,7 +48,8 @@ class _AICustomerServiceScreenState extends ConsumerState<AICustomerServiceScree
     setState(() {
       _messages.add({
         'role': 'ai',
-        'content': 'Hello! I am AnChat AI, your personal assistant. How can I help you today?'
+        'content':
+            'Hello! I am AnChat AI, your personal assistant. How can I help you today?'
       });
     });
   }
@@ -64,7 +67,8 @@ class _AICustomerServiceScreenState extends ConsumerState<AICustomerServiceScree
 
     try {
       final response = await _chat.sendMessage(Content.text(text));
-      final responseText = response.text ?? "I'm sorry, I couldn't process that.";
+      final responseText =
+          response.text ?? "I'm sorry, I couldn't process that.";
 
       if (mounted) {
         setState(() {
@@ -99,12 +103,15 @@ class _AICustomerServiceScreenState extends ConsumerState<AICustomerServiceScree
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Customer Service AI'),
-      ),
-      child: SafeArea(
+      child: GlassmorphicBackground(
         child: Column(
           children: [
+            const CupertinoNavigationBar(
+              middle: Text('Customer Service AI',
+                  style: TextStyle(color: CupertinoColors.white)),
+              backgroundColor: CupertinoColors.transparent,
+              border: null,
+            ),
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
@@ -114,24 +121,37 @@ class _AICustomerServiceScreenState extends ConsumerState<AICustomerServiceScree
                   final msg = _messages[index];
                   final isAI = msg['role'] == 'ai';
                   return Align(
-                    alignment: isAI ? Alignment.centerLeft : Alignment.centerRight,
+                    alignment:
+                        isAI ? Alignment.centerLeft : Alignment.centerRight,
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isAI ? CupertinoColors.systemGrey6 : CupertinoColors.activeBlue,
-                        borderRadius: BorderRadius.circular(12),
+                        color: isAI
+                            ? CupertinoColors.white.withValues(alpha: 0.2)
+                            : CupertinoColors.activeBlue.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(12),
+                          topRight: const Radius.circular(12),
+                          bottomLeft: Radius.circular(isAI ? 0 : 12),
+                          bottomRight: Radius.circular(isAI ? 12 : 0),
+                        ),
+                        border: Border.all(
+                            color:
+                                CupertinoColors.white.withValues(alpha: 0.1)),
                       ),
                       child: Text(
                         msg['content']!,
-                        style: TextStyle(color: isAI ? CupertinoColors.black : CupertinoColors.white),
+                        style: const TextStyle(color: CupertinoColors.white),
                       ),
                     ),
                   );
                 },
               ),
             ),
-            Padding(
+            GlassCard(
+              blur: 20,
+              opacity: 0.1,
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
@@ -139,12 +159,23 @@ class _AICustomerServiceScreenState extends ConsumerState<AICustomerServiceScree
                     child: CupertinoTextField(
                       controller: _inputController,
                       placeholder: 'Type your response...',
+                      placeholderStyle: TextStyle(
+                          color: CupertinoColors.white.withValues(alpha: 0.5)),
+                      style: const TextStyle(color: CupertinoColors.white),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color:
+                                CupertinoColors.white.withValues(alpha: 0.2)),
+                      ),
                       onSubmitted: (_) => _handleSend(),
                     ),
                   ),
                   CupertinoButton(
                     onPressed: _handleSend,
-                    child: const Icon(CupertinoIcons.paperplane_fill),
+                    child: const Icon(CupertinoIcons.paperplane_fill,
+                        color: CupertinoColors.white),
                   ),
                 ],
               ),
