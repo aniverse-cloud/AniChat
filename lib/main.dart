@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'core/supabase_config.dart';
 import 'core/router.dart';
 import 'ui/theme/theme.dart';
@@ -9,6 +10,13 @@ import 'models/contact.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Request permissions on startup
+  await [
+    Permission.camera,
+    Permission.storage,
+    Permission.photos,
+  ].request();
 
   await Hive.initFlutter();
   Hive.registerAdapter(MessageAdapter());
